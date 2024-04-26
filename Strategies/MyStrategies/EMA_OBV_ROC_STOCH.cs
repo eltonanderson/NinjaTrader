@@ -31,34 +31,23 @@ namespace NinjaTrader.NinjaScript.Strategies.MyStrategies
     {
 
         #region Tipos		
-        private EMA2 ema;
-        private OBV2 obv;
-        private ROC2 roc;
-        private STOCH2 sto;
+        private EMA2 _ema;
+        private OBV2 _obv;
+        private ROC2 _roc;
+        private STOCH2 _sto;
 
-        private int PIVcompra;
-        private int PIVvenda;
-        private int EMAcompra;
-        private int EMAvenda;
-        private int OBVcompra;
-        private int OBVvenda;
-        private int ROCcompra;
-        private int ROCvenda;
-        private int STOcompra;
-        private int STOvenda;
+        private int _trailingTrigger;
+        private int _trailingStep;
 
-        private int _TrailingTrigger;
-        private int _TrailingStep;
+        private double _trailingPrice;
+        private double _entryPrice;
+        private double _diffPrice;
 
-        private double trailingPrice;
-        private double entryPrice;
-        private double diffPrice;
-
-        private bool goodToGo;
-        private bool comprado;
-        private bool vendido;
-        private bool trailingStop;
-        private bool disconnection;
+        private bool _goodToGo;
+        private bool _bought;
+        private bool _sold;
+        private bool _trailingStop;
+        private bool _disconnection;
         #endregion
 
         protected override void OnStateChange()
@@ -98,24 +87,24 @@ namespace NinjaTrader.NinjaScript.Strategies.MyStrategies
                 periodEMA3 = 17;
                 espacamentoEMA = 0.14;      //0.13
 
-                periodOBV = 15;     //13
+                periodOBV = 15;             //13
                 espacamentoOBV = 35;        //20
 
-                periodROC = 5;      //4
-                emaROC = 13;        //4
+                periodROC = 5;              //4
+                emaROC = 13;                //4
 
                 periodSTO = 17;
                 emaSTO = 12;
                 signalSTO = 17;
 
-                pivROC = 19;        //20  
+                pivROC = 19;                //20  
 
-                StopLossTicks = 10;     //13
+                StopLossTicks = 10;         //13
                 ProfitTargetTicks = 37;     //31
-                TrailingStep = 6;       //7
+                TrailingStep = 6;           //7
                 TrailingTrigger = 6;        //6
 
-                OpenSession = DateTime.Parse("19:00", System.Globalization.CultureInfo.InvariantCulture);
+                OpenSession = DateTime.Parse("20:00", System.Globalization.CultureInfo.InvariantCulture);
                 CloseSession = DateTime.Parse("17:00", System.Globalization.CultureInfo.InvariantCulture);
                 #endregion
 
@@ -125,20 +114,20 @@ namespace NinjaTrader.NinjaScript.Strategies.MyStrategies
 
             else if (State == State.Configure)
             {
-                ema = EMA2(periodEMA1, periodEMA2, periodEMA3, espacamentoEMA);
-                obv = OBV2(periodOBV, espacamentoOBV);
-                roc = ROC2(periodROC, emaROC);
-                sto = STOCH2(periodSTO, emaSTO, signalSTO);
+                _ema = EMA2(periodEMA1, periodEMA2, periodEMA3, espacamentoEMA);
+                _obv = OBV2(periodOBV, espacamentoOBV);
+                _roc = ROC2(periodROC, emaROC);
+                _sto = STOCH2(periodSTO, emaSTO, signalSTO);
 
-                disconnection = false;
+                _disconnection = false;
             }
 
             else if (State == State.DataLoaded)
             {
-                AddChartIndicator(ema);
-                AddChartIndicator(obv);
-                AddChartIndicator(roc);
-                AddChartIndicator(sto);
+                AddChartIndicator(_ema);
+                AddChartIndicator(_obv);
+                AddChartIndicator(_roc);
+                AddChartIndicator(_sto);
 
                 ClearOutputWindow();
                 Draw.TextFixed(this, "Robot", Name, TextPosition.BottomLeft);
@@ -164,42 +153,42 @@ namespace NinjaTrader.NinjaScript.Strategies.MyStrategies
 
                 #region Stop Management	(OnBarUpdate)
 
-                if (trailingStop)
+                if (_trailingStop)
 
                 {
 
-                    if (Position.MarketPosition == MarketPosition.Long && Close[0] >= trailingPrice)
+                    if (Position.MarketPosition == MarketPosition.Long && Close[0] >= _trailingPrice)
                     {
-                        trailingPrice = Close[0];
-                        diffPrice = (trailingPrice - entryPrice) / TickSize;
+                        _trailingPrice = Close[0];
+                        _diffPrice = (_trailingPrice - _entryPrice) / TickSize;
                         Print("----------------------------------------------------------------------------------------");
-                        Print(Time[0] + " " + Instrument.FullName + " Preço de Entrada = " + entryPrice);
-                        Print(Time[0] + " " + Instrument.FullName + " Alcançe do Preco = " + trailingPrice);
-                        Print(Time[0] + " " + Instrument.FullName + " Diff Entrada/Alcançe (Ticks) = " + diffPrice);
+                        Print(Time[0] + " " + Instrument.FullName + " Preço de Entrada = " + _entryPrice);
+                        Print(Time[0] + " " + Instrument.FullName + " Alcançe do Preco = " + _trailingPrice);
+                        Print(Time[0] + " " + Instrument.FullName + " Diff Entrada/Alcançe (Ticks) = " + _diffPrice);
                         Print("----------------------------------------------------------------------------------------");
                     }
 
-                    if (Position.MarketPosition == MarketPosition.Short && Close[0] <= trailingPrice)
+                    if (Position.MarketPosition == MarketPosition.Short && Close[0] <= _trailingPrice)
                     {
-                        trailingPrice = Close[0];
-                        diffPrice = (entryPrice - trailingPrice) / TickSize;
+                        _trailingPrice = Close[0];
+                        _diffPrice = (_entryPrice - _trailingPrice) / TickSize;
                         Print("----------------------------------------------------------------------------------------");
-                        Print(Time[0] + " " + Instrument.FullName + " Preço de Entrada = " + entryPrice);
-                        Print(Time[0] + " " + Instrument.FullName + " Alcance do Preco = " + trailingPrice);
-                        Print(Time[0] + " " + Instrument.FullName + " Diff Entrada/Alcançe (Ticks) = " + diffPrice);
+                        Print(Time[0] + " " + Instrument.FullName + " Preço de Entrada = " + _entryPrice);
+                        Print(Time[0] + " " + Instrument.FullName + " Alcance do Preco = " + _trailingPrice);
+                        Print(Time[0] + " " + Instrument.FullName + " Diff Entrada/Alcançe (Ticks) = " + _diffPrice);
                         Print("----------------------------------------------------------------------------------------");
                     }
 
-                    if (diffPrice > 0 && diffPrice >= _TrailingTrigger)
+                    if (_diffPrice > 0 && _diffPrice >= _trailingTrigger)
                     {
-                        SetStopLoss(CalculationMode.Ticks, (StopLossTicks - _TrailingStep));
+                        SetStopLoss(CalculationMode.Ticks, (StopLossTicks - _trailingStep));
 
-                        _TrailingTrigger = _TrailingTrigger + TrailingTrigger;
-                        _TrailingStep = _TrailingStep + TrailingStep;
+                        _trailingTrigger = _trailingTrigger + TrailingTrigger;
+                        _trailingStep = _trailingStep + TrailingStep;
 
                         Print("----------------------------------------------------------------------------------------");
                         Print(Time[0] + " " + Instrument.FullName + " Trailing Step");
-                        Print(Time[0] + " " + Instrument.FullName + " Preço de Entrada = " + entryPrice);
+                        Print(Time[0] + " " + Instrument.FullName + " Preço de Entrada = " + _entryPrice);
                         Print(Time[0] + " " + Instrument.FullName + " Trailing Trigger Price = " + Close[0]);
                         Print("----------------------------------------------------------------------------------------");
                     }
@@ -212,176 +201,29 @@ namespace NinjaTrader.NinjaScript.Strategies.MyStrategies
 
             }
 
-            if ((Times[0][0].TimeOfDay < OpenSession.TimeOfDay) && (Times[0][0].TimeOfDay > CloseSession.TimeOfDay))
-                goodToGo = false;
+            if((Times[0][0].TimeOfDay < OpenSession.TimeOfDay) && (Times[0][0].TimeOfDay > CloseSession.TimeOfDay))
+            {
+                _goodToGo = false;
+                BackBrush = Brushes.LightGray;
+            }
+                
 
             else
-                goodToGo = true;
+                _goodToGo = true;
 
-            if (goodToGo)
+            if (_goodToGo && !_disconnection)
             {
-
-                #region Formação das Condições de Entrada
-
-                // Formação do PIVOT
-                if (
-                    (Close[0] > Open[0] && Open[1] == Open[0] && roc.CurrROC[0] < pivROC)
-                    //|| (Close[0] > Open[0] && Close[1] > Open[1] && Open[2] == Open[1]  && roc.CurrROC[0] < pivROC)
-                    )
-                {
-                    PIVcompra = 1;
-                    PIVvenda = 0;
-
-                    //Print(Time[0] + "		" + "ROC Value =" + " " + roc.CurrROC[0]);
-                    //Print(Time[0] + "		" + "PIVOT Compra =" + " " + PIVcompra);
-                    //Print(Time[0] + "		" + "PIVOT Venda =" + " " + PIVvenda);
-                    //Print("--------------------------------------------------------");
-                }
-                else if (
-                    (Close[0] < Open[0] && Open[1] == Open[0] && roc.CurrROC[0] > -pivROC)
-                    //|| (Close[0] < Open[0] && Close[1] < Open[1] && Open[2] == Open[1] && roc.CurrROC[0] > -pivROC)
-                    )
-                {
-                    PIVcompra = 0;
-                    PIVvenda = 1;
-
-                    //Print(Time[0] + "		" + "ROC Value =" + " " + roc.CurrROC[0]);
-                    //Print(Time[0] + "		" + "PIVOT Compra =" + " " + PIVcompra);
-                    //Print(Time[0] + "		" + "PIVOT Venda =" + " " + PIVvenda);
-                    //Print("--------------------------------------------------------");
-                }
-                else
-                {
-                    PIVcompra = 0;
-                    PIVvenda = 0;
-
-                    //Print(Time[0] + "		" + "ROC Value =" + " " + roc.CurrROC[0]);
-                    //Print(Time[0] + "		" + "PIVOT Compra =" + " " + PIVcompra);
-                    //Print(Time[0] + "		" + "PIVOT Venda =" + " " + PIVvenda);
-                    //Print("--------------------------------------------------------");
-                }
-
-                // Formação EMA2
-                if (ema.boolcompra[0] != null)
-                {
-                    if (ema.boolcompra[0] == true)
-                        EMAcompra = 1;
-                    else
-                        EMAcompra = 0;
-
-                    //bool booltest = ema.boolcompra[0];			
-                    //Print(Time[0] + "		" + "EMA2 Compra =" + " " + booltest);
-                    //Print(Time[0] + "		" + "EMA2 Compra =" + " " + EMAcompra);
-                }
-
-                if (ema.boolvenda[0] != null)
-                {
-                    if (ema.boolvenda[0] == true)
-                        EMAvenda = 1;
-                    else
-                        EMAvenda = 0;
-
-                    //bool booltest5 = ema.boolvenda[0];			
-                    //Print(Time[0] + "		" + "EMA2 Venda =" + " " + booltest5);
-                    //Print(Time[0] + "		" + "EMA2 Venda =" + " " + EMAvenda);
-                    //Print("--------------------------------------------------------");
-                }
-
-                // Formação OBV2
-                if (obv.boolcompra[0] != null)
-                {
-                    if (obv.boolcompra[0] == true)
-                        OBVcompra = 1;
-                    else
-                        OBVcompra = 0;
-
-                    //bool booltest2 = obv.boolcompra[0];			
-                    //Print(Time[0] + "		" + "OBV2 Compra =" + " " + booltest2);
-                    //Print(Time[0] + "		" + "OBV2 Compra =" + " " + OBVcompra);
-                }
-
-                if (obv.boolvenda[0] != null)
-                {
-                    if (obv.boolvenda[0] == true)
-                        OBVvenda = 1;
-                    else
-                        OBVvenda = 0;
-
-                    //bool booltest6 = obv.boolvenda[0];			
-                    //Print(Time[0] + "		" + "OBV2 Venda =" + " " + booltest6);
-                    //Print(Time[0] + "		" + "OBV2 Venda =" + " " + OBVvenda);
-                    //Print("--------------------------------------------------------");
-                }
-
-                // Formação ROC2
-                if (roc.boolcompra[0] != null)
-                {
-                    if (roc.boolcompra[0] == true)
-                        ROCcompra = 1;
-                    else
-                        ROCcompra = 0;
-
-                    //bool booltest3 = roc.boolcompra[0];			
-                    //Print(Time[0] + "		" + "ROC2 Compra =" + " " + booltest3);
-                    //Print(Time[0] + "		" + "ROC2 Compra =" + " " + ROCcompra);
-                }
-
-                if (roc.boolvenda[0] != null)
-                {
-                    if (roc.boolvenda[0] == true)
-                        ROCvenda = 1;
-                    else
-                        ROCvenda = 0;
-
-                    //bool booltest7 = roc.boolvenda[0];			
-                    //Print(Time[0] + "		" + "ROC2 Venda =" + " " + booltest7);
-                    //Print(Time[0] + "		" + "ROC2 Venda =" + " " + ROCvenda);
-                    //Print("--------------------------------------------------------");
-                }
-
-                // Formação STO2
-                if (sto.boolcompra[0] != null)
-                {
-                    if (sto.boolcompra[0] == true)
-                        STOcompra = 1;
-                    else
-                        STOcompra = 0;
-
-                    //bool booltest4 = sto.boolcompra[0];			
-                    //Print(Time[0] + "		" + "STO2 Compra =" + " " + booltest4);
-                    //Print(Time[0] + "		" + "STO2 Compra =" + " " + STOcompra);
-                }
-
-                if (sto.boolvenda[0] != null)
-                {
-                    if (sto.boolvenda[0] == true)
-                        STOvenda = 1;
-                    else
-                        STOvenda = 0;
-
-                    //bool booltest8 = sto.boolvenda[0];			
-                    //Print(Time[0] + "		" + "STO2 Venda =" + " " + booltest8);
-                    //Print(Time[0] + "		" + "STO2 Venda =" + " " + STOvenda);
-                    //Print("--------------------------------------------------------");
-                }
-                #endregion
-
-
 
                 #region Condição de COMPRA/VENDA
 
-                // Condição de COMPRA
-
+                // Buying Condition
 
                 if ((Position.MarketPosition == MarketPosition.Flat)
-                    //condicoes de compra aqui
-                    && ((PIVcompra == 1 && EMAcompra == 1 && OBVcompra == 1 && STOcompra == 1)
-                    || (PIVcompra == 1 && EMAcompra == 1 && ROCcompra == 1 && STOcompra == 1)
-                    //|| (PIVcompra == 1 && OBVcompra == 1 && ROCcompra == 1 && STOcompra == 1)
-                    || (PIVcompra == 1 && EMAcompra == 1 && OBVcompra == 1 && ROCcompra == 1))
-
-                    //&& STOcompra == 1 && Close[0] > Open[0]
-
+                    && (Close[0] > Open[0] && Open[1] == Open[0])
+                    && _ema.boolLongSeries[0] && _ema.boolLongSeries[1] && _ema.boolLongSeries[2]
+                    && _obv.boolLongSeries[0] //&& _obv.boolLongSeries[1]
+                    && _roc.boolLongSeries[0] //&& _roc.boolLongSeries[1]
+                    && _sto.boolLongSeries[0] //&& _sto.boolLongSeries[1]
                     )
                 {
                     Print("----------------------------------------------------------------------------------------");
@@ -391,25 +233,21 @@ namespace NinjaTrader.NinjaScript.Strategies.MyStrategies
                     //EnterLongMIT(Quantidade, Close[0]);
                     EnterLong(Quantidade);
 
-                    trailingPrice = Close[0];
-                    entryPrice = Close[0];
+                    _trailingPrice = Close[0];
+                    _entryPrice = Close[0];
 
                     Print(Time[0] + " " + Instrument.FullName + " Ordem de COMPRA Enviada");
                     Print("----------------------------------------------------------------------------------------");
                 }
 
-                // Condição de VENDA
-
+                // Selling Condition
 
                 if ((Position.MarketPosition == MarketPosition.Flat)
-                    //condicoes de venda aqui
-                    && ((PIVvenda == 1 && EMAvenda == 1 && OBVvenda == 1 && STOvenda == 1)
-                    || (PIVvenda == 1 && EMAvenda == 1 && ROCvenda == 1 && STOvenda == 1)
-                    //|| (PIVvenda == 1 && OBVvenda == 1 && ROCvenda == 1 && STOvenda == 1)
-                    || (PIVvenda == 1 && EMAvenda == 1 && OBVvenda == 1 && ROCvenda == 1))
-
-                    //&& STOvenda == 1 && Close[0] < Open[0]
-
+                    && (Close[0] < Open[0] && Open[1] == Open[0])
+                    && _ema.boolShortSeries[0] && _ema.boolShortSeries[1] && _ema.boolShortSeries[2]
+                    && _obv.boolShortSeries[0] //&& _obv.boolShortSeries[1]
+                    && _roc.boolShortSeries[0] //&& _roc.boolShortSeries[1]
+                    && _sto.boolShortSeries[0] //&& _sto.boolShortSeries[1]
                     )
                 {
                     Print("----------------------------------------------------------------------------------------");
@@ -419,8 +257,8 @@ namespace NinjaTrader.NinjaScript.Strategies.MyStrategies
                     //EnterShortMIT(Quantidade, Close[0]);
                     EnterShort(Quantidade);
 
-                    trailingPrice = Close[0];
-                    entryPrice = Close[0];
+                    _trailingPrice = Close[0];
+                    _entryPrice = Close[0];
 
                     Print(Time[0] + " " + Instrument.FullName + " Ordem de VENDA Enviada");
                     Print("----------------------------------------------------------------------------------------");
@@ -433,55 +271,52 @@ namespace NinjaTrader.NinjaScript.Strategies.MyStrategies
 
 
         #region Stop Management	(OnMarketData)
-        /*		
+        		
                 protected override void OnMarketData(MarketDataEventArgs marketDataUpdate)
                 {
 
-                    if (trailingStop && marketDataUpdate.Price > 0)
+                    if (_trailingStop && marketDataUpdate.Price > 0)
 
                                 {
 
-                                    if(Position.MarketPosition == MarketPosition.Long && marketDataUpdate.Price > trailingPrice)
+                                    if(Position.MarketPosition == MarketPosition.Long && marketDataUpdate.Price > _trailingPrice)
                                             {
-                                                trailingPrice = marketDataUpdate.Price;
-                                                diffPrice = (trailingPrice - entryPrice)  / TickSize;
+                                                _trailingPrice = marketDataUpdate.Price;
+                                                _diffPrice = (_trailingPrice - _entryPrice)  / TickSize;
                                                 Print ("------------------------------------------------");
-                                                Print("Preço de Entrada = " + entryPrice);										
-                                                Print("Alcançe do Preco = " + trailingPrice);
-                                                Print("Diff Entrada/Alcançe = " + diffPrice);
+                                                Print("Preço de Entrada = " + _entryPrice);										
+                                                Print("Alcançe do Preco = " + _trailingPrice);
+                                                Print("Diff Entrada/Alcançe = " + _diffPrice);
                                                 Print ("------------------------------------------------");
                                             }
 
-                                    if(Position.MarketPosition == MarketPosition.Short && marketDataUpdate.Price < trailingPrice)
+                                    if(Position.MarketPosition == MarketPosition.Short && marketDataUpdate.Price < _trailingPrice)
                                             {
-                                                trailingPrice = marketDataUpdate.Price;
-                                                diffPrice = (entryPrice - trailingPrice) / TickSize;
+                                                _trailingPrice = marketDataUpdate.Price;
+                                                _diffPrice = (_entryPrice - _trailingPrice) / TickSize;
                                                 Print ("------------------------------------------------");
-                                                Print("Preço de Entrada = " + entryPrice);										
-                                                Print("Alcance do Preco = " + trailingPrice);
-                                                Print("Diff Entrada/Alcançe = " + diffPrice);
+                                                Print("Preço de Entrada = " + _entryPrice);										
+                                                Print("Alcance do Preco = " + _trailingPrice);
+                                                Print("Diff Entrada/Alcançe = " + _diffPrice);
                                                 Print ("------------------------------------------------");
                                             }
 
-                                    if(diffPrice > 0 && diffPrice >= _TrailingTrigger)
+                                    if(_diffPrice > 0 && _diffPrice >= _trailingTrigger)
                                             {
-                                                SetStopLoss(CalculationMode.Ticks, (StopLossTicks - _TrailingStep));
+                                                SetStopLoss(CalculationMode.Ticks, (StopLossTicks - _trailingStep));
 
-                                                _TrailingTrigger = _TrailingTrigger + TrailingTrigger;
-                                                _TrailingStep = _TrailingStep + TrailingStep;
+                                                _trailingTrigger += TrailingTrigger;
+                                                _trailingStep += TrailingStep;
 
                                                 Print ("------------------------------------------------");
                                                 Print ("Trailing Step");
-                                                Print("Preço de Entrada = " + entryPrice);										
+                                                Print("Preço de Entrada = " + _entryPrice);										
                                                 Print("Trailing Trigger Price = " + marketDataUpdate.Price);
                                                 Print ("------------------------------------------------");
                                             }
-
-
                                 }
-
                 }
-        */
+        
         #endregion
 
 
@@ -510,8 +345,8 @@ namespace NinjaTrader.NinjaScript.Strategies.MyStrategies
 
             if (order.OrderState == OrderState.Cancelled)
             {
-                comprado = false;
-                vendido = false;
+                _bought = false;
+                _sold = false;
 
                 Print("----------------------------------------------------------------------------------------");
                 Print(Time[0] + " " + Instrument.FullName + " Ordem Cancelada");
@@ -530,13 +365,13 @@ namespace NinjaTrader.NinjaScript.Strategies.MyStrategies
         {
             if (position.MarketPosition == MarketPosition.Flat)
             {
-                comprado = false;
-                vendido = false;
-                trailingStop = false;
+                _bought = false;
+                _sold = false;
+                _trailingStop = false;
 
-                _TrailingTrigger = TrailingTrigger;
-                _TrailingStep = TrailingStep;
-                diffPrice = 0;
+                _trailingTrigger = TrailingTrigger;
+                _trailingStep = TrailingStep;
+                _diffPrice = 0;
 
                 Print("----------------------------------------------------------------------------------------");
                 Print(Time[0] + " " + Instrument.FullName + " Posição = Zerado");
@@ -546,13 +381,13 @@ namespace NinjaTrader.NinjaScript.Strategies.MyStrategies
 
             if (position.MarketPosition == MarketPosition.Long)
             {
-                comprado = true;
-                vendido = false;
-                trailingStop = true;
+                _bought = true;
+                _sold = false;
+                _trailingStop = true;
 
-                _TrailingTrigger = TrailingTrigger;
-                _TrailingStep = TrailingStep;
-                diffPrice = 0;
+                _trailingTrigger = TrailingTrigger;
+                _trailingStep = TrailingStep;
+                _diffPrice = 0;
 
                 Print("----------------------------------------------------------------------------------------");
                 Print(Time[0] + " " + Instrument.FullName + " Posição = Comprado");
@@ -561,13 +396,13 @@ namespace NinjaTrader.NinjaScript.Strategies.MyStrategies
 
             if (position.MarketPosition == MarketPosition.Short)
             {
-                comprado = false;
-                vendido = true;
-                trailingStop = true;
+                _bought = false;
+                _sold = true;
+                _trailingStop = true;
 
-                _TrailingTrigger = TrailingTrigger;
-                _TrailingStep = TrailingStep;
-                diffPrice = 0;
+                _trailingTrigger = TrailingTrigger;
+                _trailingStep = TrailingStep;
+                _diffPrice = 0;
 
                 Print("----------------------------------------------------------------------------------------");
                 Print(Time[0] + " " + Instrument.FullName + " Posição = Vendido");
@@ -718,10 +553,10 @@ namespace NinjaTrader.NinjaScript.Strategies.MyStrategies
                     Print("----------------------------------------------------------------------------------------");
                     Print(Time[0] + " " + Instrument.FullName + " Todas Posições Fechadas");
                     Print("----------------------------------------------------------------------------------------");
-                    goodToGo = false;
+                    _goodToGo = false;
                 }
 
-                if (disconnection)
+                if (_disconnection)
                 {
                     Print("----------------------------------------------------------------------------------------");
                     Print(Time[0] + " " + Instrument.FullName + " Robo Parado por Perda de Conexão");
@@ -733,26 +568,11 @@ namespace NinjaTrader.NinjaScript.Strategies.MyStrategies
 
             else if (connectionStatusUpdate.Status == ConnectionStatus.ConnectionLost)
             {
-                disconnection = true;
+                _disconnection = true;
             }
         }
         #endregion
 
-        #region Outros Metodos Uteis
-
-        protected override void OnAccountItemUpdate(Cbi.Account account, Cbi.AccountItem accountItem, double value)
-        {
-
-        }
-
-
-        protected override void OnMarketDepth(MarketDepthEventArgs marketDepthUpdate)
-        {
-
-        }
-
-
-        #endregion
 
     }
 }

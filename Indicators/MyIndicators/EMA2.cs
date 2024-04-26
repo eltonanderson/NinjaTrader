@@ -27,15 +27,15 @@ namespace NinjaTrader.NinjaScript.Indicators.MyIndicators
     public class EMA2 : Indicator
     {
 
-        private EMA ema1;
-        private EMA ema2;
-        private EMA ema3;
+        private EMA _ema1;
+        private EMA _ema2;
+        private EMA _ema3;
 
-        private bool compra;
-        private bool venda;
+        private bool _longCondition;
+        private bool _shortCondition;
 
-        public Series<bool> boolcompra;
-        public Series<bool> boolvenda;
+        public Series<bool> boolLongSeries;
+        public Series<bool> boolShortSeries;
 
 
         protected override void OnStateChange()
@@ -69,15 +69,15 @@ namespace NinjaTrader.NinjaScript.Indicators.MyIndicators
 
             else if (State == State.Configure)
             {
-                ema1 = EMA(PeriodEMA1);
-                ema2 = EMA(PeriodEMA2);
-                ema3 = EMA(PeriodEMA3);
+                _ema1 = EMA(PeriodEMA1);
+                _ema2 = EMA(PeriodEMA2);
+                _ema3 = EMA(PeriodEMA3);
             }
 
             else if (State == State.DataLoaded)
             {
-                boolcompra = new Series<bool>(this);
-                boolvenda = new Series<bool>(this);
+                boolLongSeries = new Series<bool>(this);
+                boolShortSeries = new Series<bool>(this);
             }
         }
 
@@ -92,46 +92,46 @@ namespace NinjaTrader.NinjaScript.Indicators.MyIndicators
             }
 
 
-            EMA_1[0] = ema1[0];
-            EMA_2[0] = ema2[0];
-            EMA_3[0] = ema3[0];
+            EMA_1[0] = _ema1[0];
+            EMA_2[0] = _ema2[0];
+            EMA_3[0] = _ema3[0];
 
             BackBrush = null;
 
-            if (ema1[0] > ema2[0]
-                && ema2[0] > ema3[0]
+            if (_ema1[0] > _ema2[0]
+                && _ema2[0] > _ema3[0]
 
 
-                && ema1[0] - ema2[0] >= EspacamentoEMA
-                && ema2[0] - ema3[0] >= EspacamentoEMA
+                && _ema1[0] - _ema2[0] >= EspacamentoEMA
+                && _ema2[0] - _ema3[0] >= EspacamentoEMA
                 )
             {
                 BackBrush = Brushes.PaleGreen;
-                compra = true;
-                venda = false;
+                _longCondition = true;
+                _shortCondition = false;
             }
 
-            else if (ema1[0] < ema2[0]
-                && ema2[0] < ema3[0]
+            else if (_ema1[0] < _ema2[0]
+                && _ema2[0] < _ema3[0]
 
 
-                && ema2[0] - ema1[0] >= EspacamentoEMA
-                && ema3[0] - ema2[0] >= EspacamentoEMA
+                && _ema2[0] - _ema1[0] >= EspacamentoEMA
+                && _ema3[0] - _ema2[0] >= EspacamentoEMA
                 )
             {
                 BackBrush = Brushes.Pink;
-                compra = false;
-                venda = true;
+                _longCondition = false;
+                _shortCondition = true;
             }
 
             else
             {
-                compra = false;
-                venda = false;
+                _longCondition = false;
+                _shortCondition = false;
             }
 
-            boolcompra[0] = compra;
-            boolvenda[0] = venda;
+            boolLongSeries[0] = _longCondition;
+            boolShortSeries[0] = _shortCondition;
         }
 
         #region Properties

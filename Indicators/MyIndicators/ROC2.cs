@@ -26,15 +26,15 @@ namespace NinjaTrader.NinjaScript.Indicators.MyIndicators
 {
     public class ROC2 : Indicator
     {
-        private ROC roc1;
-        private EMA ema1;
-        private EMA ema2;
+        private ROC _roc1;
+        private EMA _ema1;
+        private EMA _ema2;
 
-        private bool compra;
-        private bool venda;
+        private bool _longCondition;
+        private bool _shortCondition;
 
-        public Series<bool> boolcompra;
-        public Series<bool> boolvenda;
+        public Series<bool> boolLongSeries;
+        public Series<bool> boolShortSeries;
 
         protected override void OnStateChange()
         {
@@ -60,22 +60,22 @@ namespace NinjaTrader.NinjaScript.Indicators.MyIndicators
             }
             else if (State == State.Configure)
             {
-                ema1 = EMA(Close, emaROC);
-                roc1 = ROC(ema1, PeriodROC);
-                ema2 = EMA(roc1, emaROC);
+                _ema1 = EMA(Close, emaROC);
+                _roc1 = ROC(_ema1, PeriodROC);
+                _ema2 = EMA(_roc1, emaROC);
             }
 
             else if (State == State.DataLoaded)
             {
-                boolcompra = new Series<bool>(this);
-                boolvenda = new Series<bool>(this);
+                boolLongSeries = new Series<bool>(this);
+                boolShortSeries = new Series<bool>(this);
             }
         }
 
         protected override void OnBarUpdate()
         {
-            CurrROC[0] = roc1[0] * 1000;
-            EmaROC[0] = ema2[0] * 1000;
+            CurrROC[0] = _roc1[0] * 1000;
+            EmaROC[0] = _ema2[0] * 1000;
 
             BackBrush = null;
 
@@ -85,8 +85,8 @@ namespace NinjaTrader.NinjaScript.Indicators.MyIndicators
                 )
             {
                 BackBrush = Brushes.PaleGreen;
-                compra = true;
-                venda = false;
+                _longCondition = true;
+                _shortCondition = false;
             }
 
             else if (CurrROC[0] < EmaROC[0]
@@ -95,18 +95,18 @@ namespace NinjaTrader.NinjaScript.Indicators.MyIndicators
                 )
             {
                 BackBrush = Brushes.Pink;
-                compra = false;
-                venda = true;
+                _longCondition = false;
+                _shortCondition = true;
             }
 
             else
             {
-                compra = false;
-                venda = false;
+                _longCondition = false;
+                _shortCondition = false;
             }
 
-            boolcompra[0] = compra;
-            boolvenda[0] = venda;
+            boolLongSeries[0] = _longCondition;
+            boolShortSeries[0] = _shortCondition;
         }
 
         #region Properties

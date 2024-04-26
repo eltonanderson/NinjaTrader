@@ -26,14 +26,14 @@ namespace NinjaTrader.NinjaScript.Indicators.MyIndicators
 {
     public class OBV2 : Indicator
     {
-        private OBV obv1;
-        private SMA sma1;
+        private OBV _obv1;
+        private SMA _sma1;
 
-        private bool compra;
-        private bool venda;
+        private bool _longCondition;
+        private bool _shortCondition;
 
-        public Series<bool> boolcompra;
-        public Series<bool> boolvenda;
+        public Series<bool> boolLongSeries;
+        public Series<bool> boolShortSeries;
 
 
         protected override void OnStateChange()
@@ -64,23 +64,23 @@ namespace NinjaTrader.NinjaScript.Indicators.MyIndicators
             }
             else if (State == State.Configure)
             {
-                obv1 = OBV(Close);
+                _obv1 = OBV(Close);
 
-                sma1 = SMA(obv1, PeriodOBV);
+                _sma1 = SMA(_obv1, PeriodOBV);
             }
 
             else if (State == State.DataLoaded)
             {
-                boolcompra = new Series<bool>(this);
-                boolvenda = new Series<bool>(this);
+                boolLongSeries = new Series<bool>(this);
+                boolShortSeries = new Series<bool>(this);
             }
         }
 
         protected override void OnBarUpdate()
         {
 
-            _OBV[0] = obv1[0] / 100;
-            SMA_OBV[0] = sma1[0] / 100;
+            _OBV[0] = _obv1[0] / 100;
+            SMA_OBV[0] = _sma1[0] / 100;
 
             BackBrush = null;
 
@@ -89,8 +89,8 @@ namespace NinjaTrader.NinjaScript.Indicators.MyIndicators
                 )
             {
                 BackBrush = Brushes.PaleGreen;
-                compra = true;
-                venda = false;
+                _longCondition = true;
+                _shortCondition = false;
             }
 
             else if (_OBV[0] < SMA_OBV[0]
@@ -98,18 +98,18 @@ namespace NinjaTrader.NinjaScript.Indicators.MyIndicators
                 )
             {
                 BackBrush = Brushes.Pink;
-                compra = false;
-                venda = true;
+                _longCondition = false;
+                _shortCondition = true;
             }
 
             else
             {
-                compra = false;
-                venda = false;
+                _longCondition = false;
+                _shortCondition = false;
             }
 
-            boolcompra[0] = compra;
-            boolvenda[0] = venda;
+            boolLongSeries[0] = _longCondition;
+            boolShortSeries[0] = _shortCondition;
         }
 
         #region Properties

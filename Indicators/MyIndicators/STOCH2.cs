@@ -26,15 +26,15 @@ namespace NinjaTrader.NinjaScript.Indicators.MyIndicators
 {
     public class STOCH2 : Indicator
     {
-        private StochasticsFast stoch1;
-        private EMA ema1;
-        private EMA ema2;
+        private StochasticsFast _sto1;
+        private EMA _ema1;
+        private EMA _ema2;
 
-        private bool compra;
-        private bool venda;
+        private bool _longCondition;
+        private bool _shortCondition;
 
-        public Series<bool> boolcompra;
-        public Series<bool> boolvenda;
+        public Series<bool> boolLongSeries;
+        public Series<bool> boolShortSeries;
 
         protected override void OnStateChange()
         {
@@ -62,22 +62,22 @@ namespace NinjaTrader.NinjaScript.Indicators.MyIndicators
             }
             else if (State == State.Configure)
             {
-                stoch1 = StochasticsFast(Close, StochPeriodD, StochEMA);
-                ema1 = EMA(stoch1.D, StochEMA);
-                ema2 = EMA(ema1, StochSignal);
+                _sto1 = StochasticsFast(Close, StochPeriodD, StochEMA);
+                _ema1 = EMA(_sto1.D, StochEMA);
+                _ema2 = EMA(_ema1, StochSignal);
             }
 
             else if (State == State.DataLoaded)
             {
-                boolcompra = new Series<bool>(this);
-                boolvenda = new Series<bool>(this);
+                boolLongSeries = new Series<bool>(this);
+                boolShortSeries = new Series<bool>(this);
             }
         }
 
         protected override void OnBarUpdate()
         {
-            StochD[0] = ema1[0];
-            StochSig[0] = ema2[0];
+            StochD[0] = _ema1[0];
+            StochSig[0] = _ema2[0];
 
             BackBrush = null;
 
@@ -87,8 +87,8 @@ namespace NinjaTrader.NinjaScript.Indicators.MyIndicators
                 )
             {
                 BackBrush = Brushes.PaleGreen;
-                compra = true;
-                venda = false;
+                _longCondition = true;
+                _shortCondition = false;
             }
 
             else if (StochD[0] < StochSig[0]
@@ -97,17 +97,17 @@ namespace NinjaTrader.NinjaScript.Indicators.MyIndicators
                 )
             {
                 BackBrush = Brushes.Pink;
-                compra = false;
-                venda = true;
+                _longCondition = false;
+                _shortCondition = true;
             }
             else
             {
-                compra = false;
-                venda = false;
+                _longCondition = false;
+                _shortCondition = false;
             }
 
-            boolcompra[0] = compra;
-            boolvenda[0] = venda;
+            boolLongSeries[0] = _longCondition;
+            boolShortSeries[0] = _shortCondition;
         }
 
         #region Properties
